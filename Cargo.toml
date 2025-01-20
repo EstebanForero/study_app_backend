@@ -10,6 +10,7 @@ envy = "0.4.2"
 libsql = "0.6.0"
 serde = { version = "1.0.217", features = ["derive"] }
 serde_json = "1.0.137"
+thiserror = "2.0.11"
 tokio = { version = "1.43.0", features = ["full"] }
 tracing = "0.1.41"
 tracing-subscriber = "0.3.19"

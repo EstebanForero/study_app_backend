@@ -4,7 +4,8 @@ use repository::Repository;
 use serde::Deserialize;
 use study_service::StudyService;
 mod api;
-mod domain;
+pub mod domain;
+pub mod err;
 mod repository;
 mod study_service;
 
