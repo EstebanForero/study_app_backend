@@ -18,4 +18,6 @@ impl Repository {
 
         Ok(repo)
     }
+
+    pub async fn get_study_topics() ->
 }
