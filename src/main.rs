@@ -2,7 +2,9 @@ use std::error::Error;
 
 use repository::Repository;
 use serde::Deserialize;
+mod api;
 mod repository;
+mod study_service;
 
 #[derive(Debug, Deserialize)]
 struct Config {
