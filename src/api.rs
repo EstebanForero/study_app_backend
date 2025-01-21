@@ -32,6 +32,7 @@ pub async fn start_api(study_service: StudyService) {
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
+    println!("Runnig in port: 8080");
 
     axum::serve(listener, app).await.unwrap();
 }
