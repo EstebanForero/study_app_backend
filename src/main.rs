@@ -3,6 +3,7 @@ use std::error::Error;
 use repository::Repository;
 use serde::Deserialize;
 use study_service::StudyService;
+use tracing_subscriber::util::SubscriberInitExt;
 mod api;
 pub mod domain;
 pub mod err;
@@ -19,6 +20,8 @@ struct Config {
 async fn main() -> Result<(), Box<dyn Error>> {
     dotenvy::dotenv()?;
     let config = envy::from_env::<Config>()?;
+
+    tracing_subscriber::fmt().init();
 
     let repository = Repository::new(config.db_url, config.db_token).await?;
 
