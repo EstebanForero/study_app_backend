@@ -3,7 +3,6 @@ use std::error::Error;
 use repository::Repository;
 use serde::Deserialize;
 use study_service::StudyService;
-use tracing_subscriber::util::SubscriberInitExt;
 mod api;
 pub mod domain;
 pub mod err;
