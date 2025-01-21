@@ -5,7 +5,7 @@ use axum::{
     Json, Router,
 };
 use tower_http::cors::CorsLayer;
-use tracing::error;
+use tracing::{error, info};
 
 use crate::{
     domain::{StudyTopic, StudyTopicInfo},
@@ -32,7 +32,7 @@ pub async fn start_api(study_service: StudyService) {
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
-    println!("Runnig in port: 8080");
+    info!("Running in port: 8080");
 
     axum::serve(listener, app).await.unwrap();
 }
