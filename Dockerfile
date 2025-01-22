@@ -16,5 +16,10 @@ RUN cargo build --release --bin study_app_backend
 # We do not need the Rust toolchain to run the binary!
 FROM debian:bookworm-slim AS runtime
 WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
 COPY --from=builder /app/target/release/study_app_backend /usr/local/bin
 ENTRYPOINT ["/usr/local/bin/study_app_backend"]
