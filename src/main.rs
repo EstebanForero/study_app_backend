@@ -18,7 +18,7 @@ struct Config {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    dotenvy::dotenv()?;
+    let _ = dotenvy::dotenv();
     let config = envy::from_env::<Config>()?;
 
     tracing_subscriber::fmt().init();
