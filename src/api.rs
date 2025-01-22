@@ -31,9 +31,11 @@ pub async fn start_api(study_service: StudyService, port: String) {
         .layer(cors)
         .with_state(state);
 
+    info!("Trying to run in port: {port}");
+
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{port}"))
         .await
-        .expect("Failed to bind to port 8080");
+        .expect("Failed to bind to port");
     info!("Running in port: 8080");
 
     axum::serve(listener, app).await.unwrap();
