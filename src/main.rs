@@ -13,6 +13,7 @@ mod study_service;
 struct Config {
     db_url: String,
     db_token: String,
+    port: String,
 }
 
 #[tokio::main]
@@ -26,7 +27,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let study_service = StudyService::new(repository);
 
-    api::start_api(study_service).await;
+    api::start_api(study_service, config.port).await;
 
     Ok(())
 }

@@ -17,7 +17,7 @@ struct ApiState {
     study_service: StudyService,
 }
 
-pub async fn start_api(study_service: StudyService) {
+pub async fn start_api(study_service: StudyService, port: String) {
     let state = ApiState { study_service };
 
     let cors = CorsLayer::very_permissive();
@@ -31,7 +31,7 @@ pub async fn start_api(study_service: StudyService) {
         .layer(cors)
         .with_state(state);
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:8080")
+    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{port}"))
         .await
         .expect("Failed to bind to port 8080");
     info!("Running in port: 8080");
