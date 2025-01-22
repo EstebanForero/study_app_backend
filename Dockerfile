@@ -20,22 +20,18 @@ RUN cargo build --release --bin study_app_backend
 FROM debian:bookworm-slim AS runtime
 WORKDIR /app
 
-# Install necessary packages for TLS and debugging
+# Install CA certificates and debugging tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    openssl \
-    wget && \
+    ca-certificates curl openssl && \
+    update-ca-certificates && \
     rm -rf /var/lib/apt/lists/*
-
-# Verify that certificates are installed
-RUN update-ca-certificates
 
 # Copy the compiled binary
 COPY --from=builder /app/target/release/study_app_backend /usr/local/bin
 
-# Ensure the environment has proper CA paths
-ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
-ENV SSL_CERT_DIR=/etc/ssl/certs
+# Verify CA certificates (optional for debugging)
+RUN ls -l /etc/ssl/certs/ && \
+    curl https://example.com --insecure || echo "Debugging: Curl failed"
 
 # Set the entrypoint
 ENTRYPOINT ["/usr/local/bin/study_app_backend"]
