@@ -113,6 +113,7 @@ impl StudyService {
         &self,
         study_topic_info: StudyTopicInfo,
     ) -> StudyServiceResult<()> {
+        info!("Adding study topic with study topic info: {study_topic_info:?}");
         self.repo.add_study_topic(study_topic_info).await?;
 
         Ok(())

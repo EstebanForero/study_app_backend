@@ -8,6 +8,8 @@ pub struct StudyTopic {
     pub creation_date: String,
     pub subject_name: String,
     pub last_session_date: Option<String>,
+    pub total_sessions: i64,
+    pub completed_sessions: i64,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
