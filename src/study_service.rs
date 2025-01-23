@@ -1,6 +1,9 @@
+use std::sync::Arc;
+
 use chrono::{NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
-use tracing::error;
+use tokio::sync::Mutex;
+use tracing::{error, info};
 
 use crate::{
     domain::{StudySessionInfo, StudyTopic, StudyTopicInfo, Subject},
@@ -11,11 +14,66 @@ use crate::{
 #[derive(Clone)]
 pub struct StudyService {
     repo: Repository,
+    study_session_creator: Arc<Mutex<StudySessionCreator>>,
+}
+
+struct StudySessionCreator {}
+
+impl StudySessionCreator {
+    pub async fn create_study_sessions_today(
+        &self,
+        study_service: &StudyService,
+        repo: &Repository,
+    ) -> StudyServiceResult<()> {
+        info!("Creating study sessions");
+
+        let study_topics_today = study_service.get_study_topics_for_today().await?;
+
+        info!("the study topics for today are: {study_topics_today:?}");
+
+        let today = Utc::now().naive_utc().date().format("%Y-%m-%d").to_string();
+
+        let mut study_topics_to_process = Vec::new();
+
+        for study_topic in study_topics_today {
+            if !repo
+                .exists_study_session_with(study_topic.id, today.clone())
+                .await?
+                && (study_topic.last_session_date.is_none()
+                    || study_topic.last_session_date.clone().unwrap() != today)
+            {
+                info!("Processed study topic: {study_topic:?}");
+                study_topics_to_process.push(study_topic);
+            }
+        }
+
+        for study_topic in study_topics_to_process {
+            self.create_study_session(study_topic.id, repo).await?;
+        }
+
+        Ok(())
+    }
+
+    async fn create_study_session(
+        &self,
+        study_topic_id: i64,
+        repo: &Repository,
+    ) -> StudyServiceResult<()> {
+        repo.create_study_session(study_topic_id).await?;
+        repo.update_last_session_date(study_topic_id).await?;
+        repo.increase_study_topic_total_sessions(study_topic_id)
+            .await?;
+
+        Ok(())
+    }
 }
 
 impl StudyService {
     pub fn new(repo: Repository) -> Self {
-        Self { repo }
+        Self {
+            repo,
+            study_session_creator: Arc::new(Mutex::new(StudySessionCreator {})),
+        }
     }
 
     pub async fn add_subject(&self, subject_name: String) -> StudyServiceResult<()> {
@@ -31,16 +89,22 @@ impl StudyService {
     }
 
     pub async fn complete_study_session(&self, study_session_id: i64) -> StudyServiceResult<()> {
+        info!("Completing study session");
         let study_topic_id = self
             .repo
             .get_study_topic_id_with_study_session(study_session_id)
             .await?;
 
+        info!("The study topic id is: {study_topic_id}");
         self.repo
             .increase_study_topic_completed_sessions(study_topic_id)
             .await?;
 
+        info!("increasing study topic completed sessions");
+
         self.repo.delete_study_session(study_session_id).await?;
+
+        info!("Deleting study session");
 
         Ok(())
     }
@@ -78,7 +142,11 @@ impl StudyService {
         &self,
         subject_name: String,
     ) -> StudyServiceResult<Vec<StudySessionResponse>> {
-        self.create_study_sessions_today().await?;
+        self.study_session_creator
+            .lock()
+            .await
+            .create_study_sessions_today(self, &self.repo)
+            .await?;
 
         let study_sessions = self
             .repo
@@ -93,39 +161,6 @@ impl StudyService {
         }
 
         Ok(study_sessions_response)
-    }
-
-    pub async fn create_study_sessions_today(&self) -> StudyServiceResult<()> {
-        let study_topics_today = self.get_study_topics_for_today().await?;
-
-        let today = Utc::now().naive_utc().date().format("%Y-%m-%d").to_string();
-
-        let mut study_topics_to_process = Vec::new();
-
-        for study_topic in study_topics_today {
-            if self
-                .repo
-                .exists_study_session_with(study_topic.id, today.clone())
-                .await?
-            {
-                study_topics_to_process.push(study_topic);
-            }
-        }
-
-        for study_topic in study_topics_to_process {
-            self.create_study_session(study_topic.id).await?;
-        }
-
-        Ok(())
-    }
-
-    async fn create_study_session(&self, study_topic_id: i64) -> StudyServiceResult<()> {
-        self.repo.create_study_session(study_topic_id).await?;
-        self.repo
-            .increase_study_topic_total_sessions(study_topic_id)
-            .await?;
-
-        Ok(())
     }
 
     pub async fn delete_study_topic(&self, study_topic_id: i64) -> StudyServiceResult<()> {

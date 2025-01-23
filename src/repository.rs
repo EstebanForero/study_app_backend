@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use libsql::{de, Builder, Connection, Database};
+use tracing::info;
 
 use crate::{
     domain::{StudySessionInfo, StudyTopic, StudyTopicInfo, Subject},
@@ -69,7 +70,19 @@ impl Repository {
         let conn = self.get_connection().await?;
         conn.execute(
             "UPDATE study_topic SET total_sessions = total_sessions + 1 WHERE id = ?1",
-            libsql::params!(study_topic_id),
+            libsql::params![study_topic_id],
+        )
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn update_last_session_date(&self, study_topic_id: i64) -> RepoResult<()> {
+        info!("Updated last session date of study_topic_id: {study_topic_id}");
+        let conn = self.get_connection().await?;
+        conn.execute(
+            "UPDATE study_topic SET last_session_date = CURRENT_DATE WHERE id = ?1",
+            libsql::params![study_topic_id],
         )
         .await?;
 
@@ -80,7 +93,7 @@ impl Repository {
         let conn = self.get_connection().await?;
         conn.execute(
             "INSERT into study_session (study_topic_id) VALUES (?1)",
-            libsql::params!(study_topic_id),
+            libsql::params![study_topic_id],
         )
         .await?;
 
@@ -187,7 +200,7 @@ impl Repository {
         let conn = self.get_connection().await?;
         let mut rows = conn
             .query(
-                "SELECT ss.due_date, st.name AS study_topic_name FROM study_session AS ss
+                "SELECT ss.id, ss.due_date, st.name AS study_topic_name FROM study_session AS ss
 INNER JOIN study_topic AS st ON ss.study_topic_id = st.id
 WHERE subject_name = ?1",
                 libsql::params![subject_name],
